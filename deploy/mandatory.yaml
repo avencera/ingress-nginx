@@ -7,7 +7,6 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
 
 ---
-
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -184,9 +183,8 @@ subjects:
     namespace: ingress-nginx
 
 ---
-
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: apps/v1beta2
+kind: DaemonSet
 metadata:
   name: nginx-ingress-controller
   namespace: ingress-nginx
@@ -194,7 +192,6 @@ metadata:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/part-of: ingress-nginx
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: ingress-nginx
@@ -208,6 +205,15 @@ spec:
         prometheus.io/port: "10254"
         prometheus.io/scrape: "true"
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: beta.kubernetes.io/os
+                    operator: NotIn
+                    values:
+                      - windows
       serviceAccountName: nginx-ingress-serviceaccount
       containers:
         - name: nginx-ingress-controller
@@ -261,5 +267,4 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 10
-
 ---
